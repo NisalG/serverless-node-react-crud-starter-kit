@@ -1,0 +1,162 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Cognito Stack
+Parameters:
+  Environment:
+    Description: Deploying environment
+    Type: String
+    AllowedValues:
+      - dev
+      - stg
+      - prod
+    Default: dev
+  CallbackURLs:
+    Description: Callback urls for the app client
+    Type: List<String>
+  LogoutURLs:
+    Description: Logout urls for the app client
+    Type: List<String>
+
+Resources:
+  # Creates a role that allows Cognito to send SNS messages
+  SNSRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal: 
+              Service: 
+                - "cognito-idp.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "CognitoSNSPolicy"
+          PolicyDocument: 
+            Version: "2012-10-17"
+            Statement: 
+              - Effect: "Allow"
+                Action: "sns:publish"
+                Resource: "*"
+
+  # Creates a user pool in cognito for your app to auth against
+  # This example requires MFA and validates the phone number to use as MFA
+  # Other fields can be added to the schema
+  UserPool:
+    Type: "AWS::Cognito::UserPool"
+    Properties:
+      UserPoolName: !Join ['-', ["cart-user-pool", !Ref Environment]]
+      UsernameAttributes: [email]
+      AutoVerifiedAttributes:
+        - email
+        # - phone_number
+      # MfaConfiguration: "ON"
+      # SmsConfiguration:
+      #   ExternalId: !Join ['-', ["cart-user-pool-sms", !Ref Environment]]
+      #   SnsCallerArn: !GetAtt SNSRole.Arn
+      AdminCreateUserConfig: 
+        AllowAdminCreateUserOnly: true
+      Schema:
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: email
+          AttributeDataType: String
+          Mutable: false
+          Required: true
+        - Name: role
+          AttributeDataType: String
+          Mutable: true
+        - Name: location
+          AttributeDataType: String
+          Mutable: true
+    
+  # Creates a User Pool Client to be used by the identity pool
+  UserPoolClient:
+    Type: "AWS::Cognito::UserPoolClient"
+    Properties:
+      ClientName: !Join ['-', ["cart-cognito-client", !Ref Environment]]
+      GenerateSecret: false
+      UserPoolId: !Ref UserPool
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows: 
+        - implicit
+        - code
+      AllowedOAuthScopes: 
+        - email
+        - profile
+        - phone
+        - openid
+        - aws.cognito.signin.user.admin
+      CallbackURLs: !Ref CallbackURLs
+      LogoutURLs: !Ref LogoutURLs
+      SupportedIdentityProviders:
+        - COGNITO
+      IdTokenValidity: 24 #The default IdTokenValidity time unit is hours.
+      AccessTokenValidity: 24 #The default AccessTokenValidity time unit is hours.
+  # Creates a federated Identity pool
+  IdentityPool:
+    Type: "AWS::Cognito::IdentityPool"
+    Properties:
+      IdentityPoolName: !Join ['-', ["cart-identity-pool", !Ref Environment]] 
+      AllowUnauthenticatedIdentities: false
+      CognitoIdentityProviders: 
+        - ClientId: !Ref UserPoolClient
+          ProviderName: !GetAtt UserPool.ProviderName
+
+  # Create a role for authorized access to AWS resources. Control what your user can access. This example only allows Lambda invocation
+  # Only allows users in the previously created Identity Pool
+  CognitoAuthorizedRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal: 
+              Federated: "cognito-identity.amazonaws.com"
+            Action: 
+              - "sts:AssumeRoleWithWebIdentity"
+            Condition:
+              StringEquals: 
+                "cognito-identity.amazonaws.com:aud": !Ref IdentityPool
+              "ForAnyValue:StringLike":
+                "cognito-identity.amazonaws.com:amr": authenticated
+      Policies:
+        - PolicyName: "CognitoAuthorizedPolicy"
+          PolicyDocument: 
+            Version: "2012-10-17"
+            Statement: 
+              - Effect: "Allow"
+                Action:
+                  - "mobileanalytics:PutEvents"
+                  - "cognito-sync:*"
+                  - "cognito-identity:*"
+                Resource: "*"
+              - Effect: "Allow"
+                Action:
+                  - "lambda:InvokeFunction"
+                Resource: "*"
+  
+  # Assigns the roles to the Identity Pool
+  IdentityPoolRoleMapping:
+    Type: "AWS::Cognito::IdentityPoolRoleAttachment"
+    Properties:
+      IdentityPoolId: !Ref IdentityPool
+      Roles:
+        authenticated: !GetAtt CognitoAuthorizedRole.Arn
+
+Outputs:
+  UserPoolId:
+    Value: !Ref UserPool
+    Export:
+      Name: !Join ['-', ["CognitoUserPool", !Ref Environment]]
+  UserPoolClientId:
+    Value: !Ref UserPoolClient
+    Export:
+      Name: !Join ['-', ["CognitoUserPoolClient", !Ref Environment]]
+  IdentityPoolId:
+    Value: !Ref IdentityPool
+    Export:
+      Name: !Join ['-', ["CognitoIdentityPool", !Ref Environment]]

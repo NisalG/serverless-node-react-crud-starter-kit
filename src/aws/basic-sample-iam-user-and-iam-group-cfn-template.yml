@@ -1,0 +1,17 @@
+# Here's a basic CloudFormation template for creating an IAM user and an IAM group:
+# In this template, an IAM group resource named "MyIAMGroup" is created with the specified group name "my-group".
+# An IAM user resource named "MyIAMUser" is also created with the specified user name "my-user". The user is added to the IAM group by referencing the MyIAMGroup resource using !Ref MyIAMGroup.
+# Once you have the CloudFormation template ready, you can deploy it using the AWS Management Console, AWS CLI, or AWS SDKs.
+
+Resources:
+  MyIAMGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: my-group
+
+  MyIAMUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: my-user
+      Groups:
+        - !Ref MyIAMGroup

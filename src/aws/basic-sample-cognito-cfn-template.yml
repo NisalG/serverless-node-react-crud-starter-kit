@@ -1,0 +1,48 @@
+# Here's a basic CloudFormation template for setting up an Amazon Cognito user pool.
+# This template creates an Amazon Cognito user pool with the name "MyUserPool" and configures it with email as the username attribute. It also sets up password policies and defines two custom attributes: "email" and "name". The email verification message and SMS verification message are also specified.
+# Additionally, the template creates a user pool client named "MyUserPoolClient" that is associated with the user pool.
+# You can customize the values of the properties based on your requirements. Once you have the CloudFormation template ready, you can deploy it using the AWS Management Console, AWS CLI, or AWS SDKs.
+
+Resources:
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: MyUserPool
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+      Schema:
+        - AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Name: email
+          Required: true
+        - AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Name: name
+          Required: true
+      EmailVerificationSubject: Verify your email
+      EmailVerificationMessage: Please click the link below to verify your email address <a href="{####}">{####}</a>
+      SmsVerificationMessage: Your verification code is {####}
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: MyUserPoolClient
+      GenerateSecret: false
+      UserPoolId: !Ref UserPool
+
+Outputs:
+  UserPoolId:
+    Value: !Ref UserPool
+  UserPoolClientId:
+    Value: !Ref UserPoolClient

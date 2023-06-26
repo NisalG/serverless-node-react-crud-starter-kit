@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# npm run prettier
+npm run compile
+npx pretty-quick --staged
+npm run lint
+

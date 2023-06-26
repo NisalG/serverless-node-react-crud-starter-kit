@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Cognito Stack
+Parameters:
+  Environment:
+    Description: Deploying environment
+    Type: String
+    AllowedValues:
+      - dev
+      - stg
+      - prod
+    Default: dev
+  CallbackURLs:
+    Description: Callback urls for the app client
+    Type: List<String>
+  LogoutURLs:
+    Description: Logout urls for the app client
+    Type: List<String>
+
+Resources:
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Join ['-', ["cart-user-pool", !Ref Environment]]
+      UsernameAttributes: [email]
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+      AdminCreateUserConfig: 
+        AllowAdminCreateUserOnly: true
+      Schema:
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: email
+          AttributeDataType: String
+          Mutable: false
+          Required: true
+        - Name: role
+          AttributeDataType: String
+          Mutable: true
+        - Name: location
+          AttributeDataType: String
+          Mutable: true
+      EmailVerificationSubject: Verify your email
+      EmailVerificationMessage: Please click the link below to verify your email address <a href="{####}">{####}</a>
+      SmsVerificationMessage: Your verification code is {####}
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName:  !Join ['-', ["cart-user-pool-client", !Ref Environment]]
+      GenerateSecret: false
+      UserPoolId: !Ref UserPool
+
+Outputs:
+  UserPoolId:
+    Value: !Ref UserPool
+  UserPoolClientId:
+    Value: !Ref UserPoolClient

@@ -1,0 +1,421 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: VPC setup cloud formation template
+Parameters:
+  NumberOfAZs:
+    Description: How many availability zones do you wish to create
+    Type: Number
+    AllowedValues:
+      - 1
+      - 2
+    Default: 2
+  PrivateSubNets:
+    Description: Do you need private subnets
+    Type: String
+    AllowedValues:
+      - True
+      - False
+    Default: True
+  Environment:
+    Description: Deploying environment
+    Type: String
+    AllowedValues:
+      - dev
+      - qa
+      - stg
+      - prod
+    Default: dev
+  CreatedBy:
+    Description: Who is creating the cloudformation stack
+    Type: String
+    Default: CodePipeline
+  CIDRRange:
+    Description: cidr range
+    Type: String
+    AllowedValues:
+      - 10.0
+      - 192.168
+      - 172.16
+    Default: 10.0
+  FlowLogs:
+    Description: Enable or disable flow logs
+    Type: String
+    AllowedValues:
+      - True
+      - False
+    Default: True
+  FlowLogsIAMRole:
+    Description: Enable or disable flow logs
+    Type: String
+    Default: ''
+  RetentionInDays:
+    Description: Specifies the number of days you want to retain log events.
+    Type: Number
+    Default: 3
+    AllowedValues: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]
+  TrafficType:
+    Description: The type of traffic to log.
+    Type: String
+    Default: ALL
+    AllowedValues:
+    - ACCEPT
+    - REJECT
+    - ALL
+  Region:
+    Description: Whether we need to create the static site infrastucture
+    Type: String
+    AllowedValues:
+      - us
+      - ca
+    Default: us
+Conditions:
+  BuildPublic2: !Equals [ !Ref NumberOfAZs, 2] #both conditions achieve the same
+  BuildPrivateSubnets: !Equals [ !Ref PrivateSubNets, True]
+  BuildPrivate2: !And 
+    - !Equals [ !Ref NumberOfAZs, 2 ]
+    - !Equals [ !Ref PrivateSubNets, True]  #both conditions achieve the same
+  FlowLogIAMRole: !Equals [ !Ref FlowLogsIAMRole, ''] #both conditions achieve the same
+  
+Resources: 
+#VPC
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Join ['.', [!Ref CIDRRange, "0.0/16", ]]
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Join ['', [!Ref "AWS::StackName", "-VPC"]] #if our stackname is MyVPC this will create Name as MyVPC-VPC
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-api
+#Internet Gateway 
+  MyIG:
+    Type: AWS::EC2::InternetGateway
+    DependsOn: MyVPC
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join ['', [!Ref "AWS::StackName", "-IG"]]
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-api
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref MyVPC
+      InternetGatewayId: !Ref MyIG
+#Subnets 
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ] # Get the first AZ in the list 
+      VpcId: !Ref MyVPC
+      CidrBlock: !Join ['.', [!Ref CIDRRange, "0.0/24", ]]
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Public-1
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-api
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Condition: BuildPublic2
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs ]  
+      VpcId: !Ref MyVPC
+      CidrBlock: !Join ['.', [!Ref CIDRRange, "1.0/24", ]]
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Public-2
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-api
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Condition: BuildPrivateSubnets
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ] 
+      VpcId: !Ref MyVPC
+      CidrBlock: !Join ['.', [!Ref CIDRRange, "2.0/24", ]]
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Private-1
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-api
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Condition: BuildPrivate2
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs ]
+      VpcId: !Ref MyVPC
+      CidrBlock: !Join ['.', [!Ref CIDRRange, "3.0/24", ]]
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Private-2
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-api
+#Public Route Table
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Public-Route-Table
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-api
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref MyIG
+#Private Route Table
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Condition: BuildPrivateSubnets
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Private-Route-Table-One
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-api
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Condition: BuildPrivateSubnets
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref MyNATOne
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Condition: BuildPrivateSubnets
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Private-Route-Table-Two
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-api
+  PrivateRouteTwo:
+    Type: AWS::EC2::Route
+    Condition: BuildPrivateSubnets
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref MyNATTwo
+#Nat Gateway
+  MyNATOne:
+    Type: AWS::EC2::NatGateway
+    Condition: BuildPrivateSubnets
+    Properties:
+      AllocationId: !GetAtt ElasticIPAddressOne.AllocationId
+      SubnetId: !Ref PublicSubnet1
+      Tags:
+        - Key: Name
+          Value: !Join ['', [!Ref "AWS::StackName", "-NAT1"]]
+  ElasticIPAddressOne:
+    Type: AWS::EC2::EIP
+    Condition: BuildPrivateSubnets
+    Properties:
+      Domain: vpc
+  MyNATTwo:
+    Type: AWS::EC2::NatGateway
+    Condition: BuildPrivateSubnets
+    Properties:
+      AllocationId: !GetAtt ElasticIPAddressTwo.AllocationId
+      SubnetId: !Ref PublicSubnet2
+      Tags:
+        - Key: Name
+          Value: !Join ['', [!Ref "AWS::StackName", "-NAT2"]]
+  ElasticIPAddressTwo:
+    Type: AWS::EC2::EIP
+    Condition: BuildPrivateSubnets
+    Properties:
+      Domain: vpc
+#Attach route tables to subnets
+  PublicSubnet1Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+  PublicSubnet2Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: BuildPublic2
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+  PrivateSubnet1Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: BuildPrivateSubnets
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable1
+  PrivateSubnet2Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: BuildPrivate2
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable2
+#Security Group
+  WebSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable HTTP and SSH from 0.0.0.0/0
+      VpcId: !Ref MyVPC 
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        # - IpProtocol: tcp
+        #   FromPort: 22
+        #   ToPort: 22
+        #   CidrIp: 0.0.0.0/0      
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-SG
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-api
+  #Role for flowlogs
+  Role:
+    Type: 'AWS::IAM::Role'
+    Condition: FlowLogIAMRole
+    Properties:
+      RoleName: !Join ['-', ["cart-vpc-flowlog-role", !Ref Environment, !Ref Region]]
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: 'vpc-flow-logs.amazonaws.com'
+          Action: 'sts:AssumeRole'
+      Policies:
+      - PolicyName: !Join ['-', ["cart-flowlogs-policy", !Ref Environment, !Ref Region]]
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - 'logs:CreateLogStream'
+            - 'logs:PutLogEvents'
+            - 'logs:DescribeLogGroups'
+            - 'logs:DescribeLogStreams'
+            Resource: !GetAtt 'LogGroup.Arn'
+  LogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      RetentionInDays: !Ref RetentionInDays
+  FlowLog:
+    Type: 'AWS::EC2::FlowLog'
+    Properties:
+      DeliverLogsPermissionArn: !If [FlowLogIAMRole, !GetAtt 'Role.Arn', !Ref FlowLogsIAMRole] 
+      LogGroupName: !Ref LogGroup
+      ResourceId: !Ref MyVPC
+      ResourceType: 'VPC'
+      TrafficType: !Ref TrafficType
+
+Outputs:
+  VPCId:
+    Value: !Ref MyVPC
+    Export:
+      Name: !Sub ${AWS::StackName}-VPC
+  PublicSubnet1:
+    Value: !Ref PublicSubnet1
+    Export:
+      Name: !Sub ${AWS::StackName}-Public-1
+  PublicSubnet2:
+    Value: !Ref PublicSubnet2
+    Condition: BuildPublic2
+    Export:
+      Name: !Sub ${AWS::StackName}-Public-2
+  PrivateSubnet1:
+    Value: !Ref PrivateSubnet1
+    Condition: BuildPrivateSubnets
+    Export:
+      Name: !Sub ${AWS::StackName}-Private-1
+  PrivateSubnet2:
+    Value: !Ref PrivateSubnet2
+    Condition: BuildPrivate2
+    Export:
+      Name: !Sub ${AWS::StackName}-Private-2
+  PrivateSubnet1Export:
+    Value: !Ref PrivateSubnet1
+    Condition: BuildPrivateSubnets
+    Export:
+      Name: !Join ['-', ["CartPrivateSubnetOne", !Ref Environment]]
+  PrivateSubnet2Export:
+    Value: !Ref PrivateSubnet2
+    Condition: BuildPrivate2
+    Export:
+      Name: !Join ['-', ["CartPrivateSubnetTwo", !Ref Environment]]
+  SecurityGroup:
+    Value: !Ref WebSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-ClientSecurityGroup
+  SecurityGroupExport:
+    Value: !Ref WebSecurityGroup
+    Export:
+      Name: !Join ['-', ["CartClientSecurityGroup", !Ref Environment]]
+  SubnetsPrivate:
+    Description: 'Subnets private.'
+    Condition: BuildPrivateSubnets
+    Value: !Join [',', [!Ref PrivateSubnet1, !Ref PrivateSubnet2]]
+    Export:
+      Name: !Sub '${AWS::StackName}-SubnetsPrivate'
+  SubnetsPublic:
+    Description: 'Subnets public.'
+    Value: !Join [',', [!Ref PublicSubnet1, !Ref PublicSubnet2]]
+    Export:
+      Name: !Sub '${AWS::StackName}-SubnetsPublic'
+  SubnetsPrivateExport:
+    Description: 'Subnets private.'
+    Condition: BuildPrivateSubnets
+    Value: !Join [',', [!Ref PrivateSubnet1, !Ref PrivateSubnet2]]
+    Export:
+      Name: !Join ['-', ["CartPrivateSubnets", !Ref Environment]]
+  LogGroupName:
+    Description: 'The name of the CloudWatch Logs log group where Amazon EC2 publishes your flow logs.'
+    Value: !Ref LogGroup
+  LogGroupARN:
+    Description: 'The ARN of the CloudWatch Logs log group where Amazon EC2 publishes your flow logs.'
+    Value: !GetAtt 'LogGroup.Arn'

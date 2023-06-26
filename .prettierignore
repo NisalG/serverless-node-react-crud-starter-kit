@@ -1,0 +1,7 @@
+swagger
+coverage
+.esbuild
+.serverless
+aws
+**/*.yml
+src/data/mySQL/migration

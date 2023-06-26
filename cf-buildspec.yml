@@ -1,0 +1,34 @@
+
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo "Install Prequisites"
+      - echo $CROSS_ACCOUNT_ROLE
+      - echo $CF_EXECUTION_ROLE
+      - echo $TARGET_ACCOUNT_ID
+      - echo $STAGE
+      - cd $CODEBUILD_SRC_DIR
+      - chmod +x aws-profile-setup.sh
+  build:
+    commands:
+      - echo "Start Deploy"
+      - cd $CODEBUILD_SRC_DIR
+      - . ./aws-profile-setup.sh
+      - >
+        aws cloudformation deploy --stack-name cart-${STAGE}-vpc --template-file src/aws/vpc.yml $PARAMS --capabilities CAPABILITY_NAMED_IAM --no-fail-on-empty-changeset 
+      - >
+        aws cloudformation deploy --stack-name cart-${STAGE}-rds --template-file src/aws/rds.yml $PARAMS --capabilities CAPABILITY_NAMED_IAM --no-fail-on-empty-changeset          
+      - echo "End Deploy"
+
+# - >
+#         myid=$(aws cloudformation create-change-set --change-set-name vpc-change --stack-name cart-dev-vpc --template-body file://src/aws/vpc.yml  --output text --query Id)
+#       - > 
+#         aws cloudformation wait change-set-create-complete --change-set-name $myid 2> /dev/null
+#       - > 
+#         result_status=$(aws cloudformation describe-change-set --change-set-name $myid --output text --query Status)
+#       - >
+#         [[ "$result_status" == "CREATE_COMPLETE" ]] && aws cloudformation execute-change-set --change-set-name $myid
+#       - >
+#         aws cloudformation delete-change-set --change-set-name $myid

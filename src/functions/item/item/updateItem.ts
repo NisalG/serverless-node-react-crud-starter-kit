@@ -1,0 +1,35 @@
+import { apiResponse } from '@common/apiResponse';
+import { BadRequestError, sendErrorResponse, UnAuthorizedError } from '@common/ErrorTypes';
+import { Logger } from '@common/logger';
+import { APIGatewayProxyEvent } from 'aws-lambda';
+// import { COGNITO_CLAIM } from '@common/constants';
+// import { CognitoIdentityServiceProvider } from 'aws-sdk';
+import { UpdateItemInput } from '../item.model';
+import { updateItemDb } from '../item.service';
+
+export const updateItemHttp = async (logger: Logger, event: APIGatewayProxyEvent) => {
+  logger.Info({ message: `Updating Item` });
+
+  try {
+    const { id } = event.pathParameters;
+    //@ts-ignore
+    const updateItemInput: UpdateItemInput = event.body;
+    const claims = event.requestContext?.authorizer ?? event.requestContext?.authorizer?.claims;
+    // input.id = id;
+
+    // if (!claims) {
+    //   const err = new UnAuthorizedError(`No claims are present in the token`);
+    //   logger.Error(err);
+    //   throw err;
+    // }
+
+
+    await updateItemDb(logger, updateItemInput, claims);
+
+    return apiResponse._200({ id });
+    //TODO Add to all teams
+  } catch (err) {
+    logger.Error(err);
+    return sendErrorResponse(err, logger, 'Error when Updating Item');
+  }
+};

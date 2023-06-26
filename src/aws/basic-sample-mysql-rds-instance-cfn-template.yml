@@ -1,0 +1,43 @@
+# Here's a basic CloudFormation template for creating an Amazon RDS MySQL database:
+# In this template, an RDS DB instance resource named "MyDBInstance" is created with the specified configuration. The template uses the MySQL engine, sets the identifier, allocated storage, instance class, engine version, master username, and password.
+# Other properties include backup retention period, whether multi-AZ deployment is enabled, storage type, security group references, availability zone, and subnet group.
+# Additionally, the template creates an EC2 security group "MyDBSecurityGroup" for the RDS database and a DB subnet group "MyDBSubnetGroup" for specifying the subnets where the database will be deployed.
+# You can customize the properties according to your requirements, such as the engine version, storage size, VPC details, subnet IDs, etc. Once you have the CloudFormation template ready, you can deploy it using the AWS Management Console, AWS CLI, or AWS SDKs. The template also provides an output called "DBEndpoint" that retrieves the endpoint address of the RDS database for future reference.
+
+Resources:
+  MyDBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      Engine: mysql
+      DBInstanceIdentifier: my-db-instance
+      AllocatedStorage: 10
+      DBInstanceClass: db.t2.micro
+      EngineVersion: 5.7.31
+      MasterUsername: admin
+      MasterUserPassword: mysecretpassword
+      BackupRetentionPeriod: 7
+      MultiAZ: false
+      StorageType: gp2
+      VPCSecurityGroups:
+        - !Ref MyDBSecurityGroup
+      AvailabilityZone: us-west-2a
+      DBSubnetGroupName: my-db-subnet-group
+
+  MyDBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for the RDS database
+      VpcId: !Ref MyVPC
+
+  MyDBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupName: my-db-subnet-group
+      DBSubnetGroupDescription: Subnet group for the RDS database
+      SubnetIds:
+        - subnet-12345678
+        - subnet-87654321
+
+Outputs:
+  DBEndpoint:
+    Value: !GetAtt MyDBInstance.Endpoint.Address

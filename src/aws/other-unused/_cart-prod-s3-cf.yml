@@ -1,0 +1,386 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creates an S3 bucket for hosting a Static HTML/CSS website
+Parameters:
+  Environment:
+    Description: Deploying environment
+    Type: String
+    AllowedValues:
+      - dev
+      - qa
+      - stg
+      - prod
+    Default: dev
+  CreatedBy:
+    Description: Who is creating the cloudformation stack
+    Type: String
+    Default: CodePipeline  
+  NeeedStaticWebSite:
+    Description: Whether we need to create the static site infrastucture
+    Type: String
+    AllowedValues:
+      - True
+      - False
+    Default: True
+  Region:
+    Description: Whether we need to create the static site infrastucture
+    Type: String
+    AllowedValues:
+      - us
+      - ca
+    Default: us
+Conditions:
+  NeedStaticInfra: !Equals [!Ref NeeedStaticWebSite, True]
+Mappings:
+  S3BucketRegionMap:
+    us-east-1:
+      "bucketURL" : '.s3.us-east-1.amazonaws.com'
+    ca-central-1:
+      "bucketURL" : '.s3.ca-central-1.amazonaws.com'
+  RiderectS3BucketRegionMap:
+    us-east-1:
+      "bucketURL" : '.s3-website-us-east-1.amazonaws.com'
+    ca-central-1:
+      "bucketURL" : '.s3-website-ca-central-1.amazonaws.com'
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Condition: NeedStaticInfra
+    Properties:
+      BucketName: !Join ['-', [ !Ref Environment, !Ref Region, "docs.cart.com"]]
+      AccessControl: Private
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - 'Authorization'
+              - 'Content-Length'
+              - 'content-type'
+            AllowedMethods:
+              - GET
+              - PUT
+            AllowedOrigins:
+              - '*'
+            Id: CartCORSRule
+            MaxAge: 3600
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      Tags:
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-doc-wallet   
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+  CloudFrontOriginIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Condition: NeedStaticInfra
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: 'origin identity'  
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Condition: NeedStaticInfra
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginIdentity}'
+            Action: 's3:GetObject'
+            Resource: !Join 
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref S3Bucket
+                - /*   
+  # CloudFrontStaticCachePolicy:
+  #   Type: AWS::CloudFront::CachePolicy
+  #   Properties: 
+  #     CachePolicyConfig: 
+  #       DefaultTTL: 86400
+  #       MaxTTL: 31536000
+  #       MinTTL: 1
+  #       Name: CartCloudFrontStaticCachePolicy
+  #       ParametersInCacheKeyAndForwardedToOrigin: 
+  #         EnableAcceptEncodingBrotli: true
+  #         EnableAcceptEncodingGzip: true
+  #         CookiesConfig:
+  #           CookieBehavior: none
+  #         HeadersConfig:
+  #           HeaderBehavior: none
+  #         QueryStringsConfig:
+  #           QueryStringBehavior: none 
+  publicDistribution:
+    Type: AWS::CloudFront::Distribution
+    Condition: NeedStaticInfra
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !Join 
+            - ''
+            - - !Ref S3Bucket
+              - !FindInMap [S3BucketRegionMap, !Ref "AWS::Region", bucketURL] 
+            Id: !Join 
+              - 'S3-'
+              - - !Ref S3Bucket
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginIdentity}'
+        Enabled: 'true'
+        DefaultCacheBehavior:
+          Compress: true
+          # CachePolicyId: !Ref CloudFrontStaticCachePolicy
+          AllowedMethods:
+            - GET
+            - HEAD
+          TargetOriginId: !Join 
+            - 'S3-'
+            - - !Ref S3Bucket
+          ForwardedValues:
+            QueryString: 'false'
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: allow-all #redirect-to-https
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: 'true'
+        DefaultRootObject: index.html
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 3600
+      Tags:
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-doc-wallet      
+  AssetS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join ['-', [ "cart-assets", !Ref Environment, !Ref Region, ]]
+      AccessControl: Private
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - 'Authorization'
+              - 'Content-Length'
+              - 'content-type'
+              - 'x-location'
+            AllowedMethods:
+              - GET
+              - PUT
+            AllowedOrigins:
+              - '*'
+            Id: CartCORSRule
+            MaxAge: 3600
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'AES256'
+      Tags:
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-doc-wallet   
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+  CloudFrontOriginIdentityAssets:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: 'origin identity'  
+  AssetBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AssetS3Bucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*' 
+            Action: ['s3:GetObject', 's3:PutObject' ]
+            Resource: !Join
+            - ''
+            - - 'arn:aws:s3:::'
+              - !Ref AssetS3Bucket
+              - /assets/*  
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginIdentityAssets}'
+            Action: 's3:GetObject'
+            Resource: !Join 
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref AssetS3Bucket
+                - /*   
+  publicDistributionAssets:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !Join 
+            - ''
+            - - !Ref AssetS3Bucket
+              - !FindInMap [S3BucketRegionMap, !Ref "AWS::Region", bucketURL]
+            Id: !Join 
+              - 'S3-'
+              - - !Ref AssetS3Bucket
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginIdentity}'
+        Enabled: 'true'
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+          TargetOriginId: !Join 
+            - 'S3-'
+            - - !Ref AssetS3Bucket
+          ForwardedValues:
+            QueryString: 'false'
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: allow-all #redirect-to-https
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: 'true'
+        DefaultRootObject: index.html
+      Tags:
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-doc-wallet 
+  RedirectS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join ['-', [ !Ref Environment, !Ref Region, "redirect.docs.cart.com"]]
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      AccessControl: AuthenticatedRead
+      Tags:
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-doc-wallet   
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+  CloudFrontOriginIdentityRedirect:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: 'origin identity'  
+  RedirectBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref RedirectS3Bucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*' 
+            Action: 's3:GetObject'
+            Resource: !Join
+            - ''
+            - - 'arn:aws:s3:::'
+              - !Ref RedirectS3Bucket
+              - /assets/*  
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginIdentityRedirect}'
+            Action: 's3:GetObject'
+            Resource: !Join 
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref RedirectS3Bucket
+                - /*   
+          - Effect: Allow
+            Principal: '*'
+            Action: 
+              - "s3:GetObject"
+              - "s3:PutObject"
+              - "s3:PutObjectAcl"
+              - "s3:GetObject"
+              - "s3:GetObjectAcl"
+              - "s3:DeleteObject"
+            Resource: !Join 
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref RedirectS3Bucket
+                - /*  
+  publicDistributionRedirect:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !Join 
+            - ''
+            - - !Ref RedirectS3Bucket
+              - !FindInMap [RiderectS3BucketRegionMap, !Ref "AWS::Region", bucketURL]
+            Id: !Join 
+              - 'S3-'
+              - - !Ref RedirectS3Bucket
+            CustomOriginConfig: 
+              OriginProtocolPolicy: match-viewer
+        Enabled: 'true'
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+          TargetOriginId: !Join 
+            - 'S3-'
+            - - !Ref RedirectS3Bucket
+          ForwardedValues:
+            QueryString: 'false'
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: allow-all #redirect-to-https
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: 'true'
+        DefaultRootObject: index.html
+      Tags:
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-doc-wallet 
+Outputs:
+  WebsiteURL:
+    Condition: NeedStaticInfra
+    Value: !GetAtt
+      - S3Bucket
+      - WebsiteURL
+    Description: URL for website hosted on S3
+  S3BucketSecureURL:
+    Condition: NeedStaticInfra
+    Value: !Join
+      - ''
+      - - 'https://'
+        - !GetAtt
+          - S3Bucket
+          - DomainName
+    Description: Name of S3 bucket to hold website content
+  AssetsS3Bucket:
+    Description: 'Assets S3 bucket ARN.'
+    Value: !Ref AssetS3Bucket
+    Export:
+      Name: !Join ['-', ["AssetS3Bucket", !Ref Environment]] 
+  RedirectS3Bucket:
+    Description: 'Assets S3 bucket ARN.'
+    Value: !Ref RedirectS3Bucket
+    Export:
+      Name: !Sub '${AWS::StackName}-RedirectS3Bucket'
+  AssetsS3BucketARN:
+    Description: 'Assets S3 bucket ARN.'
+    Value: !GetAtt AssetS3Bucket.Arn 
+    Export:
+      Name: !Join ['-', ["AssetS3BucketARN", !Ref Environment]] 

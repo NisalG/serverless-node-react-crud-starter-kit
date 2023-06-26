@@ -1,0 +1,138 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creates an S3 bucket for hosting a Static HTML/CSS website
+Parameters:
+  Environment:
+    Description: Deploying environment
+    Type: String
+    AllowedValues:
+      - dev
+      - qa
+      - stg
+      - prod
+    Default: dev
+  CreatedBy:
+    Description: Who is creating the cloudformation stack
+    Type: String
+    Default: CodePipeline  
+  NeeedStaticWebSite:
+    Description: Whether we need to create the static site infrastucture
+    Type: String
+    AllowedValues:
+      - True
+      - False
+    Default: True
+Conditions:
+  NeedStaticInfra: !Equals [!Ref NeeedStaticWebSite, True]
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Condition: NeedStaticInfra
+    Properties:
+      BucketName: !Join ['-', [ !Ref Environment, "redirect.docs.cart.com"]]
+      AccessControl: PublicRead
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls : false
+        BlockPublicPolicy : false
+        IgnorePublicAcls : false
+        RestrictPublicBuckets : false
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      LifecycleConfiguration:
+        Rules:
+          - Id: ResetDeleteRule
+            Prefix: reset
+            Status: Enabled
+            ExpirationInDays: 1
+      Tags:
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-doc-wallet   
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+
+  # CloudFrontOriginIdentity:
+  #   Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+  #   Condition: NeedStaticInfra
+  #   Properties:
+  #     CloudFrontOriginAccessIdentityConfig:
+  #       Comment: 'origin identity'  
+  # BucketPolicy:
+  #   Type: AWS::S3::BucketPolicy
+  #   Condition: NeedStaticInfra
+  #   Properties:
+  #     Bucket: !Ref S3Bucket
+  #     PolicyDocument:
+  #       Version: 2012-10-17
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             AWS: !Sub 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginIdentity}'
+  #           Action: 's3:GetObject'
+  #           Resource: !Join 
+  #             - ''
+  #             - - 'arn:aws:s3:::'
+  #               - !Ref S3Bucket
+  #               - /*    
+  # publicDistribution:
+  #   Type: AWS::CloudFront::Distribution
+  #   Condition: NeedStaticInfra
+  #   Properties:
+  #     DistributionConfig:
+  #       CustomOriginConfig :
+  #         - DomainName: !Join 
+  #           - ''
+  #           - - !Ref S3Bucket
+  #             - 's3-website-us-east-1.amazonaws.com'
+  #           Id: !Join 
+  #             - 'S3-'
+  #             - - !Ref S3Bucket
+  #           S3OriginConfig:
+  #             OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginIdentity}'
+  #       Enabled: 'true'
+  #       DefaultCacheBehavior:
+  #         AllowedMethods:
+  #           - GET
+  #           - HEAD
+  #         TargetOriginId: !Join 
+  #           - 'S3-'
+  #           - - !Ref S3Bucket
+  #         ForwardedValues:
+  #           QueryString: 'false'
+  #           Cookies:
+  #             Forward: none
+  #         ViewerProtocolPolicy: allow-all #redirect-to-https
+  #       ViewerCertificate:
+  #         CloudFrontDefaultCertificate: 'true'
+  #       DefaultRootObject: index.html
+  #     Tags:
+  #       - Key: env
+  #         Value: !Join ['-', ["cart", !Ref Environment]]
+  #       - Key: createdBy
+  #         Value: !Ref CreatedBy
+  #       - Key: application
+  #         Value: cart-doc-wallet      
+Outputs:
+  WebsiteURL:
+    Condition: NeedStaticInfra
+    Value: !GetAtt
+      - S3Bucket
+      - WebsiteURL
+    Description: URL for website hosted on S3
+  S3BucketSecureURL:
+    Condition: NeedStaticInfra
+    Value: !Join
+      - ''
+      - - 'https://'
+        - !GetAtt
+          - S3Bucket
+          - DomainName
+    Description: Name of S3 bucket to hold website content
+  RedirectS3BucketARN:
+    Description: 'Assets S3 bucket ARN.'
+    Value: !GetAtt S3Bucket.Arn 
+    Export:
+      Name: !Join ['-', ["S3Bucket", !Ref Environment]] 

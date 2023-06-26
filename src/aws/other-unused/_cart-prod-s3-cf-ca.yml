@@ -1,0 +1,140 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creates an S3 bucket for hosting a Static HTML/CSS website
+Parameters:
+  Environment:
+    Description: Deploying environment
+    Type: String
+    AllowedValues:
+      - dev
+      - qa
+      - stg
+      - prod
+    Default: dev
+  CreatedBy:
+    Description: Who is creating the cloudformation stack
+    Type: String
+    Default: CodePipeline  
+  Region:
+    Description: Whether we need to create the static site infrastucture
+    Type: String
+    AllowedValues:
+      - us
+      - ca
+    Default: us
+Mappings:
+  S3BucketRegionMap:
+    us-east-1:
+      "bucketURL" : '.s3.us-east-1.amazonaws.com'
+    ca-central-1:
+      "bucketURL" : '.s3.ca-central-1.amazonaws.com'
+Resources:     
+  AssetS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join ['-', [ "cart-assets", !Ref Environment, !Ref Region, ]]
+      AccessControl: Private
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - 'Authorization'
+              - 'Content-Length'
+              - 'content-type'
+              - 'x-location'
+            AllowedMethods:
+              - GET
+              - PUT
+            AllowedOrigins:
+              - '*'
+            Id: CartCORSRule
+            MaxAge: 3600
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'AES256'
+      Tags:
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-doc-wallet   
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+  CloudFrontOriginIdentityAssets:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: 'origin identity'  
+  AssetBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AssetS3Bucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*' 
+            Action: ['s3:GetObject', 's3:PutObject' ]
+            Resource: !Join
+            - ''
+            - - 'arn:aws:s3:::'
+              - !Ref AssetS3Bucket
+              - /assets/*  
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginIdentityAssets}'
+            Action: 's3:GetObject'
+            Resource: !Join 
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref AssetS3Bucket
+                - /*   
+  publicDistributionAssets:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !Join 
+            - ''
+            - - !Ref AssetS3Bucket
+              - !FindInMap [S3BucketRegionMap, !Ref "AWS::Region", bucketURL]
+            Id: !Join 
+              - 'S3-'
+              - - !Ref AssetS3Bucket
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginIdentityAssets}'
+        Enabled: 'true'
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+          TargetOriginId: !Join 
+            - 'S3-'
+            - - !Ref AssetS3Bucket
+          ForwardedValues:
+            QueryString: 'false'
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: allow-all #redirect-to-https
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: 'true'
+        DefaultRootObject: index.html
+      Tags:
+        - Key: env
+          Value: !Join ['-', ["cart", !Ref Environment]]
+        - Key: createdBy
+          Value: !Ref CreatedBy
+        - Key: application
+          Value: cart-doc-wallet 
+ 
+Outputs:
+  AssetsS3Bucket:
+    Description: 'Assets S3 bucket ARN.'
+    Value: !Ref AssetS3Bucket
+    Export:
+      Name: !Join ['-', ["AssetS3Bucket", !Ref Environment]] 
+  AssetsS3BucketARN:
+    Description: 'Assets S3 bucket ARN.'
+    Value: !GetAtt AssetS3Bucket.Arn 
+    Export:
+      Name: !Join ['-', ["AssetS3BucketARN", !Ref Environment]] 

@@ -1,0 +1,272 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: The AWS CloudFormation template for creating cross account role to be assumed by TOOLS account to carry out deployment in this child account where the role would be created
+
+Parameters:
+  ToolsAccountID:
+    Description : Account ID of the Shared AWS Account that initiates code deployment to this account.
+    Type: String
+    ConstraintDescription: Must be a valid AWS Account ID without hyphens.
+    AllowedPattern: '\d{12}'
+    MinLength: 12
+    MaxLength: 12
+  Environment:
+    Description: Enviornment where roles being used
+    Type: String
+    AllowedValues: ['dev', 'qa', 'stg', 'prod']
+    Default: 'dev'
+
+Resources:
+  CrossAccountDeploymentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ['-', ["cross-account-role", !Ref Environment]]
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub arn:aws:iam::${ToolsAccountID}:root
+            Action:
+              - sts:AssumeRole
+
+  CrossAccountDeploymentPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Allows pipeline in master account to deploy API Gateway, Lambda
+      ManagedPolicyName: cross-account-policy-serverless-deployment
+      Roles:
+        - !Ref CrossAccountDeploymentRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: IAMRolesPermissions
+            # Needed for passing CFExecutionRole to Cloudformation Service
+            Effect: Allow
+            Action:
+              - iam:*
+            Resource: '*'
+          - Sid: S3FullAccess
+            # To Get and Put deployment artifacts in serverless deployment bucket
+            Effect: Allow
+            Action:
+              - s3:*
+            Resource: '*'
+          - Sid: LambdaFullAccess
+            # To Get and Put deployment artifacts in serverless deployment bucket
+            Effect: Allow
+            Action:
+              - lambda:*
+            Resource: '*'
+          - Sid: CloudFormationFullAccess
+            # To create serverless deployment cloudformation stack
+            Effect: Allow
+            Action:
+              - cloudformation:*
+            Resource: '*'
+          - Sid: ApiGatewayFullAccess
+            # API Gateway
+            Effect: Allow
+            Action:
+              - apigateway:*
+            Resource: '*'
+          - Sid: APIGatewayTaggingAccess
+            # Used by sls deploy to put Tags to its APIs
+            Effect: Allow
+            Action:
+              - apigateway:PUT
+            Resource: 
+              - !Sub 'arn:aws:apigateway:${AWS::Region}::/tags/*'
+          - Sid: Cloudwatch
+            # To access cloudwatch logs
+            Effect: Allow
+            Action:
+              - cloudwatch:*
+              - logs:*
+              - events:*
+            Resource: '*'
+          - Sid: EC2
+            # To access ec2 resources
+            Effect: Allow
+            Action:
+              - ec2:*
+            Resource: '*'
+          - Sid: RDS
+            # To access rds resources
+            Effect: Allow
+            Action:
+              - rds:*
+            Resource: '*'
+          - Sid: SSM
+            Effect: Allow
+            Action:
+              - ssm:GetParameter
+            Resource: '*'
+          - Sid: SNS
+            Effect: Allow
+            Action:
+              - SNS:*
+            Resource: '*'
+          - Sid: SQS
+            Effect: Allow
+            Action:
+              - SQS:*
+            Resource: '*'
+          - Sid: elasticache
+            Effect: Allow
+            Action:
+              - elasticache:*
+            Resource: '*'
+          - Sid: cloudfront
+            Effect: Allow
+            Action:
+              - cloudfront:*
+            Resource: '*'
+          - Sid: certificatemanager
+            Effect: Allow
+            Action:
+              - acm:*
+            Resource: '*'
+          - Sid: route53
+            Effect: Allow
+            Action:
+              - route53:*
+            Resource: '*'
+  CFExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:  !Join ['-', ["cf-execution-role", !Ref Environment]]
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - cloudformation.amazonaws.com
+            Action:
+              - sts:AssumeRole
+
+  CFExecutionPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Allows pipeline in TOOLS account to deploy API Gateway, Lambda
+      ManagedPolicyName: cf-execution-policy-serverless
+      Roles:
+        - !Ref CFExecutionRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: IAMRolesPermissions
+            # Needed for creating Roles for Lambdas, EC2 instances and other services
+            Effect: Allow
+            Action:
+              - iam:*
+            Resource: '*'
+          - Sid: S3FullAccess
+            # To Get and Put deployment artifacts in serverless deployment bucket
+            Effect: Allow
+            Action:
+              - s3:*
+            Resource: '*'
+          - Sid: CloudFormationFullAccess
+            # To create CF stack for serverless deployment
+            Effect: Allow
+            Action:
+              - cloudformation:*
+            Resource: '*'
+          - Sid: ApiGatewayFullAccess
+            # API Gateway
+            Effect: Allow
+            Action:
+              - apigateway:*
+            Resource: '*'
+          - Sid: LambdaFullAccess
+            # Lambda
+            Effect: Allow
+            Action:
+              - lambda:*
+            Resource: '*'
+          - Sid: Cloudwatch
+            # To access cloudwatch logs
+            Effect: Allow
+            Action:
+              - cloudwatch:*
+              - logs:*
+              - events:*
+            Resource: '*'
+          - Sid: EC2
+            # To access ec2 resources
+            Effect: Allow
+            Action:
+              - ec2:*
+            Resource: '*'
+          - Sid: RDS
+            # To access rds resources
+            Effect: Allow
+            Action:
+              - rds:*
+            Resource: '*'
+          - Sid: SSM
+            Effect: Allow
+            Action:
+              - ssm:GetParameter
+            Resource: '*'
+          - Sid: SNS
+            Effect: Allow
+            Action:
+              - SNS:*
+            Resource: '*'
+          - Sid: SQS
+            Effect: Allow
+            Action:
+              - SQS:*
+            Resource: '*'
+          - Sid: elasticache
+            Effect: Allow
+            Action:
+              - elasticache:*
+            Resource: '*'
+          - Sid: cloudfront
+            Effect: Allow
+            Action:
+              - cloudfront:*
+            Resource: '*'
+          - Sid: certificatemanager
+            Effect: Allow
+            Action:
+              - acm:*
+            Resource: '*'
+          - Sid: route53
+            Effect: Allow
+            Action:
+              - route53:*
+            Resource: '*'
+            
+
+Outputs:
+  OutCrossAccountDeploymentRole:
+    Description: Cross Account Deployment Role ARN
+    Value: !GetAtt CrossAccountDeploymentRole.Arn
+    Export:
+      Name: !Join ['-', ["cart-CrossAccount-DeploymentRoleArn", !Ref Environment]]
+
+  OutCrossAccountDeploymentPolicy:
+    Description: Cross Account Deployment Policy ARN
+    Value: !Ref CrossAccountDeploymentPolicy
+    Export:
+      Name: !Join ['-', ["cart-CrossAccount-DeploymentPolicyArn", !Ref Environment]]
+      
+  OutCFExecutionRole:
+    Description: CloudFormation Execution Role ARN
+    Value: !GetAtt CFExecutionRole.Arn
+    Export:
+      Name: !Join ['-', ["cart-CFExecutionRoleArn", !Ref Environment]]
+
+  OutCFExecutionPolicy:
+    Description: CloudFormation Execution Policy ARN
+    Value: !Ref CFExecutionPolicy
+    Export:
+      Name: !Join ['-', ["cart-CFExecutionPolicyArn", !Ref Environment]]

@@ -1,0 +1,10 @@
+#  Here's a basic CloudFormation template for creating an Amazon S3 bucket:
+# In this template, an S3 bucket resource named "MyBucket" is created with the specified bucket name "my-unique-bucket-name".
+# You can customize the bucket name as per your requirements, but please note that the bucket name must be globally unique across all existing S3 buckets in AWS.
+# Once you have the CloudFormation template ready, you can deploy it using the AWS Management Console, AWS CLI, or AWS SDKs.
+
+Resources:
+  MyBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: my-unique-bucket-name

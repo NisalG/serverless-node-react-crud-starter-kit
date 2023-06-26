@@ -1293,3 +1293,4 @@ exists. Unable to get Base Path Mappings: Invalid domain name identifier specifi
 
 * Push Notifications with Websockets & AWS SNS
 * Sentry Integration for Error Logging
+* React FE

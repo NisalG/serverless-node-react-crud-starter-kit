@@ -857,11 +857,7 @@ Serverless Framework, Node.js, TypeScript, React.js, Mongoose, TypeORM, Middy, A
 
 Middy is a very simple **middleware engine** that allows you to simplify your **AWS Lambda** code when using **Node.js**.
 
-  
-  
-  
-
-    * Add these to package.json:
+* Add these to package.json:
 
     ```
     "@middy/core": "^2.5.3",
@@ -871,38 +867,36 @@ Middy is a very simple **middleware engine** that allows you to simplify your **
     "@middy/http-security-headers": "^3.0.3",
     ```
 
-    * Middy wrapper: src\common\middyWrapper.ts
+* Middy wrapper: src\common\middyWrapper.ts
 
-    * Add custom middlewares to Middy:
+* Add custom middlewares to Middy:
 
-        * [https://javascript.plainenglish.io/how-to-start-typescript-node-aws-function-with-serverlessjs-ef4b55910127](https://javascript.plainenglish.io/how-to-start-typescript-node-aws-function-with-serverlessjs-ef4b55910127)
+    * [https://javascript.plainenglish.io/how-to-start-typescript-node-aws-function-with-serverlessjs-ef4b55910127](https://javascript.plainenglish.io/how-to-start-typescript-node-aws-function-with-serverlessjs-ef4b55910127)
 
-        * Custom middleware: src\common\middleware\errorHandlingMiddleware.ts
+    * Custom middleware: src\common\middleware\errorHandlingMiddleware.ts
 
-        * Add this to maintain a central place for error handling and add it as a middleware to all requests by adding it as a custom Middy middleware
+    * Add this to maintain a central place for error handling and add it as a middleware to all requests by adding it as a custom Middy middleware
 
   
   
 
 ### Eslint
 
-  
-  
-  
 
-    *  `$ npm install eslint --save-dev`
 
-    * For Typescript support:
+*  `$ npm install eslint --save-dev`
 
-        *  `$ npm install --save-dev @typescript-eslint/eslint-plugin`
+* For Typescript support:
 
-        *  `$ npm install --save-dev @typescript-eslint/parser`
+    *  `$ npm install --save-dev @typescript-eslint/eslint-plugin`
 
-    * Initialize an `.eslintrc` configuration file for your project using one of the following methods:
+    *  `$ npm install --save-dev @typescript-eslint/parser`
 
-        * If you want to use a popular style guide such as Airbnb or Google, you can run `$ npx eslint --init` and select the corresponding preset from the options provided.
+* Initialize an `.eslintrc` configuration file for your project using one of the following methods:
 
-        * Alternatively, you can manually create an `.eslintrc.json` file at the root of your project directory and configure it according to your preferences. Here is an example configuration object that enables some basic rules:
+    * If you want to use a popular style guide such as Airbnb or Google, you can run `$ npx eslint --init` and select the corresponding preset from the options provided.
+
+    * Alternatively, you can manually create an `.eslintrc.json` file at the root of your project directory and configure it according to your preferences. Here is an example configuration object that enables some basic rules:
 
         ```
         {
@@ -926,59 +920,58 @@ Middy is a very simple **middleware engine** that allows you to simplify your **
         }
         ```
 
-    * Add any additional plugins or configurations that are relevant to your specific application needs.
+* Add any additional plugins or configurations that are relevant to your specific application needs.
 
-    * Run
+* Run
 
-        * Basic: `$ eslint &lt;file/directory>` on any files or directories containing JavaScript code that should be checked against these rules.
+    * Basic: `$ eslint &lt;file/directory>` on any files or directories containing JavaScript code that should be checked against these rules.
 
-        * In this project: `$ npm run lint`
+    * In this project: `$ npm run lint`
 
-    * Optionally, integrate ESLint into your build process (e.g., via pre-commit hooks) to automatically check for errors before deploying new code changes. See the Husky pre-commit hooks section.
+* Optionally, integrate ESLint into your build process (e.g., via pre-commit hooks) to automatically check for errors before deploying new code changes. See the Husky pre-commit hooks section.
 
   
   
+
+
 
 ### Husky pre-commit & pre-push Hooks
-
-  
-
 Linting, Compile, Serverless validate
 
-    * [pre-commit](https://git-scm.com/docs/githooks#_pre_commit) and [pre-push](https://git-scm.com/docs/githooks#_pre_push) are two [Git Hooks](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) (Git has a way to fire off custom scripts when certain important actions occur). We use these events with Husky
+* [pre-commit](https://git-scm.com/docs/githooks#_pre_commit) and [pre-push](https://git-scm.com/docs/githooks#_pre_push) are two [Git Hooks](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) (Git has a way to fire off custom scripts when certain important actions occur). We use these events with Husky
 
-    * [Husky NPM](https://www.npmjs.com/package/husky) | [Husky Docs](https://typicode.github.io/husky/)
+* [Husky NPM](https://www.npmjs.com/package/husky) | [Husky Docs](https://typicode.github.io/husky/)
 
-        * `$ npm i husky --save-dev`
+    * `$ npm i husky --save-dev`
 
-        * Add package.json >` "prepare": "husky install",`
+    * Add package.json >` "prepare": "husky install",`
 
-        * `$ npm run prepare`
+    * `$ npm run prepare`
 
-        * Add .husky folder with files for pre-commit and pre-push Git Hooks
+    * Add .husky folder with files for pre-commit and pre-push Git Hooks
 
-        * Commands in the .husky folder will run on the commit and push events.
+    * Commands in the .husky folder will run on the commit and push events.
 
-            * .husky\pre-commit
+        * .husky\pre-commit
 
-            ```
-            # npm run prettier
-            npm run compile #(or npm run tsc to compile TSC and build .lib folder content files)
-            npx pretty-quick --staged
-            npm run lint
-            ```
-            
+        ```
+        # npm run prettier
+        npm run compile #(or npm run tsc to compile TSC and build .lib folder content files)
+        npx pretty-quick --staged
+        npm run lint
+        ```
+        
 
-            * .husky\pre-push
+        * .husky\pre-push
 
-            ```
-            npm test
-            npm run serverless:validate
-            ```
+        ```
+        npm test
+        npm run serverless:validate
+        ```
 
-    * Also see how `lib `folder is generated
+* Also see how `lib `folder is generated
 
-    * If committing is not allowed, run lint command and list the errors and fix them manually: `$ npm run lint`
+* If committing is not allowed, run lint command and list the errors and fix them manually: `$ npm run lint`
 
   
   
@@ -991,25 +984,25 @@ Linting, Compile, Serverless validate
 
 * Used this NPM package: [serverless-auto-swagger](https://www.npmjs.com/package/serverless-auto-swagger)
 
-*  `$ npm install -D serverless-auto-swagger`
+    *  `$ npm install -D serverless-auto-swagger`
 
-* OR package.json > `"serverless-auto-swagger": "^2.5.1",`
+    * OR package.json > `"serverless-auto-swagger": "^2.5.1",`
 
 * serverless.ts
 
-*  `plugins: [`
+    *  `plugins: [`
 
-*  `'serverless-auto-swagger', - should add to top/first array element`
+        *  `'serverless-auto-swagger', - should add to top/first array element`
 
-*  `custom: {`
+    *  `custom: {`
 
-*  `autoswagger`
+        *  `autoswagger`
 
 * src\types\swagger.config.ts
 
-*  `typefiles`: Array of strings which defines where to find the typescript types to use for the request and response bodies
+    *  `typefiles`: Array of strings which defines where to find the typescript types to use for the request and response bodies
 
-* If you do not add new model.ts files in here, Swagger models will not be added
+    * If you do not add new model.ts files in here, Swagger models will not be added
 
 * Swagger local access: [http://localhost:3000/dev/swagger](http://localhost:3000/dev/swagger)
 
@@ -1041,11 +1034,11 @@ Linting, Compile, Serverless validate
 
 * ErrorTypes
 
-* src\common\ErrorTypes.ts
+    * src\common\ErrorTypes.ts
 
 * API Responses types
 
-* src\common\apiResponse.ts
+    * src\common\apiResponse.ts
 
   
   
@@ -1073,258 +1066,76 @@ Linting, Compile, Serverless validate
 
 *  `plugins`: [
 
-* `'serverless-auto-swagger`', – also add to package.json and install
+    * `'serverless-auto-swagger`', – also add to package.json and install
 
 *  `provider`
 
-* `iamRoleStatements: ProviderIAMRoles,`
+    * `iamRoleStatements: ProviderIAMRoles,`
 
-* See [IAM Permissions For Functions](https://www.serverless.com/framework/docs/providers/aws/guide/iam)
-
-  
-
-AWS Lambda functions need permissions to interact with other AWS services and resources in your account. These permissions are set via an AWS IAM Role, which the Serverless Framework automatically creates for each service, and is shared by all functions in the service. The Framework allows you to modify this Role or create Function-specific Roles, easily.
+        * See [IAM Permissions For Functions](https://www.serverless.com/framework/docs/providers/aws/guide/iam)
 
   
 
-* Format:
+        AWS Lambda functions need permissions to interact with other AWS services and resources in your account. These permissions are set via an AWS IAM Role, which the Serverless Framework automatically creates for each service, and is shared by all functions in the service. The Framework allows you to modify this Role or create Function-specific Roles, easily.
 
-  
+        * Format:
 
-```
+        ```
+        Effect: 'Allow'
+        Resource: '*'
+        Action: 'iam:DeleteUser'
+        ```
 
-Effect: 'Allow'
+        * In the Cart App we include these in src\aws\serverless\ProviderIAMRoles\index.ts and import here in serverless.ts
 
-Resource: '*'
+    * `apiGateway`
 
-Action: 'iam:DeleteUser'
+        * `minimumCompressionSize - `Compress response when larger than specified size in bytes (must be between 0 and 10485760)
 
-```
+        * `shouldStartNameWithService - `# Use `${service}-${stage}` naming for API Gateway. Will be `true` by default in v3.
 
-  
-  
+    * `logs: { `- Enable HTTP API logs
 
-* In the Cart App we include these in src\aws\serverless\ProviderIAMRoles\index.ts and import here in serverless.ts
+    * ` restApi: true, - `Enables HTTP access logs (default: true)
 
-* `apiGateway`
+    * `logRetentionInDays: 30, `-Duration for CloudWatch log retention (default: forever). Overrides provider setting.
 
-* `minimumCompressionSize - `Compress response when larger than specified size in bytes (must be between 0 and 10485760)
-
-* `shouldStartNameWithService - `# Use `${service}-${stage}` naming for API Gateway. Will be `true` by default in v3.
-
-* `logs: { `- Enable HTTP API logs
-
-* ` restApi: true, - `Enables HTTP access logs (default: true)
-
-* `logRetentionInDays: 30, `-Duration for CloudWatch log retention (default: forever). Overrides provider setting.
-
-* `Environment `- Function environment variables
+    * `Environment `- Function environment variables
 
 *  `functions `from a separate src/functions.ts file
 
-* Use this as the example: `import { cartUserFunctions } from './cartUser';`
+    * Use this as the example: `import { cartUserFunctions } from './cartUser';`
 
-* Use for the CRUD src\functions\cartUser\index.ts
+    * Use for the CRUD src\functions\cartUser\index.ts
 
 *  `package`
 
 *  `custom`: {
 
-* `AWS_ACCESS_ID` - This is used in src\functions\auth\auth.service.ts > getIdentityToken. Need in Cart auth.
+    * `AWS_ACCESS_ID` - This is used in src\functions\auth\auth.service.ts > getIdentityToken. Need in Cart auth.
 
-* `esbuild`
+    * `esbuild`
 
-* Esbuild configs from [Serverless Esbuild](https://www.serverless.com/plugins/serverless-esbuild) plugin
+        * Esbuild configs from [Serverless Esbuild](https://www.serverless.com/plugins/serverless-esbuild) plugin
 
-* Serverless plugin to bundle JavaScript and TypeScript lambdas with esbuild - an extremely fast bundler and minifier
+        * Serverless plugin to bundle JavaScript and TypeScript lambdas with esbuild - an extremely fast bundler and minifier
 
-* `autoswagger `- See swagger
+    * `autoswagger `- See swagger
 
-* `warmup `- see “Warmup Lambda Functions”
+    * `warmup `- see “Warmup Lambda Functions”
 
-* `logRetentionInDays`
+    * `logRetentionInDays`
 
-* `splitStacks`
+    * `splitStacks`
 
-* Uses [serverless-plugin-split-stacks](https://www.serverless.com/plugins/serverless-plugin-split-stacks)
+        * Uses [serverless-plugin-split-stacks](https://www.serverless.com/plugins/serverless-plugin-split-stacks)
 
-* `customDomain `added as customDomain
-
-  
-  
-
-### SQS + SES + SNS
-
-  
-  
-
-#### AWS SQS and SNS to send Email & SMS notification when an Invoice is saved:
-
-  
-  
-
-##### Summary:
-
-  
-  
-  
-
-* Create AWS SQS, SES, SNS setups
-
-* Update the `serverless.yml` file accordingly
-
-* Create Invoice event(function)
-
-* SQS - Add to SQS queue
-
-* SNS - Publish messages
-
-* Usage:
-
-* SQS - sendMail() -
-
-* Triggers when a new email message is added to the queue.
-
-* Send the Email using SES
-
-* SNS - subscribeToSMSNotification()
-
-* Triggers when user SignUp(register)/SignIn
-
-* Send SMSs to the phone nos of the user taken from the DB
-
-  
-  
-
-##### Scenario/use case:
+    * `customDomain `added as customDomain
 
   
 
-**Emails:**
-
   
 
-In a Lambda app like a Billing System, SQS and SES can be used together for efficient email delivery:
-
-  
-  
-  
-
-1. Billing System: Generates invoice and publishes messages to an SQS queue, including email address and other content.
-
-2. Email-Sending Component: Implemented as an AWS Lambda function, it periodically triggers or checks for messages in the SQS queue and retrieves a batch of messages from the SQS queue, each containing an email address and invoice content.
-
-3. SES Integration: Uses the AWS SES API to send emails to recipients' addresses, populating them with invoice content and ensuring proper formatting.
-
-4. Email Delivery: SES handles reliable email delivery and manages undelivered emails, including handling bounces or complaints.
-
-  
-
-By combining SQS and SES, you create a scalable and fault-tolerant email sending system. The billing system can generate invoices without waiting for immediate email sending. The separate email-sending component retrieves messages from the SQS queue at its own pace, allowing independent scaling based on message volume. This decoupled asynchronous approach ensures efficient email delivery without overwhelming/blocking the billing system.
-
-  
-
-**SMSs:**
-
-  
-
-Using SNS for sending SMS notifications:
-
-  
-  
-  
-
-1. Notification System: Your application generates notifications and publishes them to an SNS topic instead of directly sending SMS messages.
-
-2. SMS-Sending Component: A separate component, such as an AWS Lambda function or worker process, is subscribed to the SNS topic to handle SMS message sending.
-
-3. SNS Integration: When a new notification is published to the SNS topic, it automatically triggers the SMS-sending component.
-
-4. SMS Processing: The SMS-sending component receives the notifications from SNS, extracts the recipient's phone number and message content, and processes them.
-
-5. SMS Delivery: The component uses the AWS SNS API to send SMS messages to the recipients' phone numbers, ensuring proper formatting and relevant information.
-
-  
-
-By leveraging SNS for SMS sending, you create a scalable and efficient notification system. Your application publishes notifications to the SNS topic, leaving the SMS delivery process to the subscribed component. This decoupling allows independent scaling based on message volume and ensures reliable SMS delivery. It simplifies your application logic and provides a seamless user experience.
-
-  
-  
-
-##### Setup AWS SQS to use in your Serverless application:
-
-  
-  
-  
-
-1. AWS Management Console > SQS service > Create Queue
-
-2. Provide a name(_crud1-email-queue_) for your queue and configure any desired settings. For example, you can choose between a standard queue or a FIFO queue, set visibility timeout, message retention period, etc.
-
-3. Once the queue is created, go to the queue details page. Find the queue's ARN (Amazon Resource Name) which uniquely identifies _AWS_ resources.
-
-4. Update the `serverless.yml` file in your Serverless service and replace `your-aws-region`, `your-aws-account-id`, and `your-sqs-queue-name` in the `arn` property of the `sqs` event with the appropriate values.
-
-  
-  
-
-```
-
-events: - sqs: arn: arn:aws:sqs:us-west-2:123456789012:my-queue
-
-```
-
-  
-  
-
-By updating the `arn` property with the correct ARN of your SQS queue, you have configured the Serverless Framework to trigger the `sendEmail` function whenever a message is sent to that SQS queue. With these steps, your Serverless application will be set up to receive messages from the specified SQS queue and process them to send emails using AWS SES.
-
-  
-  
-
-##### Setup AWS SES to send emails:
-
-  
-  
-  
-
-1. AWS Management Console > SES service > Choose SES region> Create identity
-
-2. Identity type - Email - give your own email.
-
-3. Verify your email address or domain in SES. This step ensures that SES can send emails on your behalf.
-
-4.  ~~Create an IAM user with proper permissions for SES.~~
-
-5.  ~~Set up SMTP credentials(username and password) to authenticate your application when sending emails via SES. ~~
-
-6. SMTP settings provided by SES, not required when sent using SQS.
-
-  
-  
-
-##### Setup AWS SNS to send SMSs
-
-  
-  
-  
-
-* Create an SNS topic:
-
-* AWS Management Console > SNS > Create topic: crud-sns-topic-send-sms
-
-* Make note of the ARN (Amazon Resource Name) for the topic.
-
-* Subscribe to the SNS topic:
-
-* Select topic > Create subscription
-
-* Choose the protocol as "SMS" and enter the phone number to which you want to send the SMS notifications. For Sandbox destination phone numbers, Add Phone No.
-
-* Confirm the subscription and validate the phone number by entering the Verification you receive. (Verification code received after several tries)
-
-  
-  
 
 ##### Update the `serverless.yml` file accordingly
 
@@ -1340,216 +1151,112 @@ By updating the `arn` property with the correct ARN of your SQS queue, you have 
 
 * Add SNS Topic Arn in `custom `section
 
-  
-  
-
 ```
-
 service: billing-system
-
   
-
 provider:
-
-name: aws
-
-runtime: nodejs14.x
-
-  
+    name: aws
+    runtime: nodejs14.x
 
 resources:
-
-Resources:
-
-InvoiceQueue:
-
-Type: AWS::SQS::Queue
-
-Properties:
-
-QueueName: invoice-queue
-
-  
+    Resources:
+        InvoiceQueue:
+            Type: AWS::SQS::Queue
+            Properties:
+                QueueName: invoice-queue
 
 functions:
-
-createInvoice:
-
-handler: createInvoice.handler
-
-events:
-
-- http:
-
-path: create-invoice
-
-method: post
-
+    createInvoice:
+        handler: createInvoice.handler
+        events:
+            - http:
+                path: create-invoice
+                method: post
 //added in src\functions\invoice\index.ts
 
-  
-
 sendEmails:
-
-handler: sendEmails.handler
-
-events:
-
-- sqs:
-
-arn: !GetAtt InvoiceQueue.Arn
-
-  
+    handler: sendEmails.handler
+    events:
+        - sqs:
+            arn: !GetAtt InvoiceQueue.Arn
 
 subscribeToSNS:
-
-handler: subscribeToSNS.handler
-
-events:
-
-- sns:
-
-arn: ${self:custom.snsTopicArn}
-
+    handler: subscribeToSNS.handler
+    events:
+        - sns:
+            arn: ${self:custom.snsTopicArn}
   
-
 custom:
-
-snsTopicArn: arn:aws:sns:us-east-1:123456789012:invoice-topic
-
+    snsTopicArn: arn:aws:sns:us-east-1:123456789012:invoice-topic
 ```
-
-  
-  
-  
 
 ##### Create Invoice event(function) (Handler file: `createInvoice.ts/` src\functions\invoice\index.ts & src\functions\invoice\invoice\addInvoice.ts)
 
-  
-  
 
 ```
-
 import { SQS, SNS } from 'aws-sdk';
-
   
-
 const sqs = new SQS();
-
 const sns = new SNS();
-
-  
 
 export const addInvoiceHttp = async (logger: Logger, event: APIGatewayProxyEvent) => {
 
-logger.Info({ message: `Adding Invoice` });
+    logger.Info({ message: `Adding Invoice` });
 
-  
+    try {
+        // Process the invoice creation logic...
 
-try {
-
-// Process the invoice creation logic...
-
-  
-
-//@ts-ignore
-
-const input: AddInvoiceInput = event.body;
-
-const claims = event.requestContext?.authorizer ??
-
-event.requestContext?.authorizer?.claims;
-
-const invoice = await addInvoice(logger, input, claims);
-
-  
-
-processEmailAndSMS();
-
-  
-
-return apiResponse._200({ invoice });
-
-} catch (err) {
-
-logger.Error(err);
-
-return sendErrorResponse(err, logger, 'Error when adding Invoice');
-
-}
-
+        //@ts-ignore
+        const input: AddInvoiceInput = event.body;
+        const claims = event.requestContext?.authorizer ??
+        event.requestContext?.authorizer?.claims;
+        const invoice = await addInvoice(logger, input, claims);
+        processEmailAndSMS();
+        return apiResponse._200({ invoice });
+    } catch (err) {
+        logger.Error(err);
+        return sendErrorResponse(err, logger, 'Error when adding Invoice');
+    }
 };
 
   
-
 const processEmailAndSMS = async () => {
+    // Get recipient's(customer's) email, phone number from customer MF
+    const recipientEmail = 'nisalg@gmail.com';
+    const recipientPhoneNumber = '+94777426816';//change this to another no
+    // if doesn't work
+    // Get invoice details
+    const invoiceDetails = 'Invoice Amount: $100.00. Thank you.';
 
-// Get recipient's(customer's) email, phone number from customer MF
+    // Prepare the message to be sent to the SQS queue
+    const emailMessage = {
+    recipientEmail
+    content: invoiceDetails
+    };
 
-const recipientEmail = 'nisalg@gmail.com';
+    // Send the emailMessage to the SQS queue
+    await sqs.sendMessage({
+        QueueUrl:
+        'https://sqs.us-east-1.amazonaws.com/xxxxxxxxxxxx/crud1-email-queue', // change this to get from Parameter Store
+        MessageBody: JSON.stringify(emailMessage)
+    }).promise();
+    
 
-const recipientPhoneNumber = '+94777426816';//change this to another no
+    // Prepare smsMessage to be sent as an SMS
 
-// if doesn't work
+    const smsMessage = {
+        phoneNumber: recipientPhoneNumber,
+        message: invoiceDetails
+    };
 
-// Get invoice details
-
-const invoiceDetails = 'Invoice Amount: $100.00. Thank you.';
-
-  
-
-// Prepare the message to be sent to the SQS queue
-
-const emailMessage = {
-
-recipientEmail,
-
-content: invoiceDetails
-
-};
-
-  
-
-// Send the emailMessage to the SQS queue
-
-await sqs.sendMessage({
-
-QueueUrl:
-
-'https://sqs.us-east-1.amazonaws.com/xxxxxxxxxxxx/crud1-email-queue', // change this to get from Parameter Store
-
-MessageBody: JSON.stringify(emailMessage)
-
-}).promise();
-
-  
-
-// Prepare smsMessage to be sent as an SMS
-
-const smsMessage = {
-
-phoneNumber: recipientPhoneNumber,
-
-message: invoiceDetails
-
-};
-
-  
-
-// Publish the message to the SNS topic for SMS notifications
-
-await sns.publish({
-
-TopicArn:
-
-'arn:aws:sns:us-east-1:588032612315:crud-sns-topic-send-sms',
-
-// change this to get from Parameter Store
-
-Message: JSON.stringify(smsMessage)
-
-}).promise();
-
+    
+    // Publish the message to the SNS topic for SMS notifications
+    await sns.publish({
+        TopicArn:
+        'arn:aws:sns:us-east-1:588032612315:crud-sns-topic-send-sms',
+        // change this to get from Parameter Store
+        Message: JSON.stringify(smsMessage)
+    }).promise();
 }
 
 ```
@@ -1569,80 +1276,41 @@ import { SQSEvent } from "aws-lambda";
 
 import { SES } from "aws-sdk";
 
-  
-
 const ses = new SES(); //config not required when send using SQS
 
-  
-
 export const sendEmails: AWSLambda.Handler<SQSEvent> = async (
-
 event: SQSEvent
-
 ) => {
+    try {
+        for (const record of event.Records) {
+            const { body } = record;
+            const message = JSON.parse(body);
+            const { recipientEmail, content } = message;
 
-try {
+            // Send email using SES
+            await ses
+            .sendEmail({
+                Source: "Your Billing System <billing@yourdomain.com>",
+                Destination: { ToAddresses [recipientEmail] },
+                Message: {
+                    Subject: { Data: "Payment Receipt(Invoice)" },
+                Body: { Text: { Data: content } },
+                },
+            })
+            .promise();
+            console.log(`Email sent to ${recipientEmail}`);
+        }
 
-for (const record of event.Records) {
+        return {
+            statusCode: 200,
+            body: "Emails sent successfully",
+        };
 
-const { body } = record;
-
-const message = JSON.parse(body);
-
-  
-
-const { recipientEmail, content } = message;
-
-  
-
-// Send email using SES
-
-await ses
-
-.sendEmail({
-
-Source: "Your Billing System <billing@yourdomain.com>",
-
-Destination: { ToAddresses: [recipientEmail] },
-
-Message: {
-
-Subject: { Data: "Payment Receipt(Invoice)" },
-
-Body: { Text: { Data: content } },
-
-},
-
-})
-
-.promise();
-
-  
-
-console.log(`Email sent to ${recipientEmail}`);
-
-}
-
-  
-
-return {
-
-statusCode: 200,
-
-body: "Emails sent successfully",
-
+    } catch (error) {
+        console.error("Error sending emails:", error);
+        throw error;
+    }
 };
-
-} catch (error) {
-
-console.error("Error sending emails:", error);
-
-throw error;
-
-}
-
-};
-
 ```
 
   
@@ -1655,67 +1323,37 @@ throw error;
   
 
 ```
-
 import { SNS } from 'aws-sdk';
-
-  
 
 const sns = new SNS();
 
-  
-
 const phoneNumbers = ['+1234567890', '+0987654321', '+9876543210']; // get these from DB
-
-  
 
 export const subscribeToSMSNotifications: AWSLambda.Handler = async (event: AWSLambda.APIGatewayEvent) => {
 
-try {
+    try {
+        const subscriptionPromises = phoneNumbers.map(async
+        (phoneNumber) => {
+            // Subscribe to the SNS topic for SMS
+            notifications
+            const subscription = await sns.subscribe({
+                TopicArn: 'your-sns-topic-arn',
+                Protocol: 'sms',
+                Endpoint: phoneNumber
+            }).promise();
+        });
 
-const subscriptionPromises = phoneNumbers.map(async
+        await Promise.all(subscriptionPromises);
 
-(phoneNumber) => {
-
-// Subscribe to the SNS topic for SMS
-
-notifications
-
-const subscription = await sns.subscribe({
-
-TopicArn: 'your-sns-topic-arn',
-
-Protocol: 'sms',
-
-Endpoint: phoneNumber
-
-}).promise();
-
-});
-
-  
-
-await Promise.all(subscriptionPromises);
-
-  
-
-return {
-
-statusCode: 200,
-
-body: 'Subscribed to SMS notifications successfully for
-
-all phone numbers'
-
-};
-
-} catch (error) {
-
-console.error('Error subscribing to SMS notifications:', error);
-
-throw error;
-
-}
-
+        return {
+            statusCode: 200,
+            body: 'Subscribed to SMS notifications successfully for
+            all phone numbers'
+        };
+    } catch (error) {
+        console.error('Error subscribing to SMS notifications:', error);
+        throw error;
+    }
 };
 
 ```
@@ -1739,33 +1377,19 @@ throw error;
 
 * Stripe API Keys
 
-* [https://dashboard.stripe.com](https://dashboard.stripe.com) > Developers > API keys
+    * [https://dashboard.stripe.com](https://dashboard.stripe.com) > Developers > API keys
 
-*  **Publishable key:** This key is used on the client-side, typically in your frontend code, to communicate securely with Stripe. It starts with "pk_" and is safe to include in your frontend JavaScript code.
+    *  **Publishable key:** This key is used on the client-side, typically in your frontend code, to communicate securely with Stripe. It starts with "pk_" and is safe to include in your frontend JavaScript code.
 
-  
+        ```
+        pk_test_xxxxxxxxxxxxxxxxxxx
+        ```
 
-```
+    * **Secret key:** This key is used on the server-side, typically in your backend code, to securely interact with Stripe's API. It starts with "sk_" and should be kept confidential. Never expose your secret key in client-side or public code.
 
-pk_test_9aJAd1SEISkblZBZ3EGa4n4m
-
-```
-
-  
-  
-
-* **Secret key: **This key is used on the server-side, typically in your backend code, to securely interact with Stripe's API. It starts with "sk_" and should be kept confidential. Never expose your secret key in client-side or public code.
-
-  
-
-```
-
-sk_test_B33OOsnh2EWoSKOtN2Q03QvO
-
-```
-
-  
-  
+        ```
+        sk_test_xxxxxxxxxxxxxxxxxxxxxxx
+        ```
 
 *  `$ npm install stripe --save`
 
@@ -1773,66 +1397,39 @@ sk_test_B33OOsnh2EWoSKOtN2Q03QvO
 
 * Stripe function in src\functions\invoice\invoice\addInvoice.ts:
 
-  
 
 ```
-
 import Stripe from 'stripe';
-
-  
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY, { apiVersion: '2022-11-15' });
 
-  
-
 const makeStripePayment = async (customerEmail, invoiceData) => {
 
-try {
+    try {
+        // Create a customer in Stripe
+        const customer = await stripe.customers.create({
+            email: customerEmail,
+            // Add more customer information if needed
+        });
 
-// Create a customer in Stripe
+        // Create a payment intent for the invoice amount
+        const paymentIntent = await 
+        stripe.paymentIntents.create({
+            amount: invoiceData.amount,
+            currency: "usd",
+            customer: customer.id,
+        });
 
-const customer = await stripe.customers.create({
-
-email: customerEmail,
-
-// Add more customer information if needed
-
-});
-
-  
-
-// Create a payment intent for the invoice amount
-
-const paymentIntent = await stripe.paymentIntents.create({
-
-amount: invoiceData.amount,
-
-currency: "usd",
-
-customer: customer.id,
-
-});
-
-  
-
-// Return the client secret to FE for completing the payment
-
-return paymentIntent.client_secret;
-
-} catch (error) {
-
-console.error("Error initiating payment:", error);
-
-throw error;
-
-}
-
+        // Return the client secret to FE for completing 
+        payment
+        return paymentIntent.client_secret;
+    } catch (error) {
+        console.error("Error initiating payment:", error);
+        throw error;
+    }
 };
 
 ```
-
-  
-  
 
 * Call above Stripe function inside Handler src\functions\invoice\invoice\addInvoice.ts
 
@@ -1841,61 +1438,32 @@ throw error;
 ```
 
 export const addInvoiceHttp = async (
-
-logger: Logger,
-
-event: APIGatewayProxyEvent
-
+    logger: Logger,
+    event: APIGatewayProxyEvent
 ) => {
 
-logger.Info({ message: `Adding Invoice` });
+    logger.Info({ message: `Adding Invoice` });
 
-  
+    try {
 
-try {
+        // Get recipient's(customer's) email, phone number 
+        from customer MF
+        const customerEmail = "nisalg@gmail.com";
 
-  
+        // Get invoice details
+        const invoiceData = { amount: 100.0 };
+        const clientSecret = await 
+            makeStripePayment(customerEmail, invoiceData);
 
-// Get recipient's(customer's) email, phone number from
-
-customer MF
-
-const customerEmail = "nisalg@gmail.com";
-
-  
-
-// Get invoice details
-
-const invoiceData = { amount: 100.0 };
-
-  
-
-const clientSecret = await makeStripePayment(customerEmail,
-
-invoiceData);
-
-  
-
-// Return the client secret to the frontend for completing the
-
-payment
-
-  
-
-return apiResponse._200({ clientSecret });
-
-} catch (err) {
-
-logger.Error(err);
-
-return sendErrorResponse(err, logger, "Error when adding Invoice");
-
-}
-
+        // Return the client secret to the frontend for 
+        completing the payment
+        return apiResponse._200({ clientSecret });
+    } catch (err) {
+        logger.Error(err);
+        return sendErrorResponse(err, logger, "Error when 
+        adding Invoice");
+    }
 };
-
-  
-
 ```
 
   
@@ -1905,6 +1473,8 @@ return sendErrorResponse(err, logger, "Error when adding Invoice");
 #### FE: [Todo]
 
   
+  
+
   
 
 ### Other
@@ -1923,45 +1493,45 @@ return sendErrorResponse(err, logger, "Error when adding Invoice");
 
 * Schedule a Lambda to run as a CRON job with Serverless Framework
 
-* In intended lambda function’s > src\functions\theLambda\index.ts
+    * In intended lambda function’s > src\functions\theLambda\index.ts
 
-*  `events: [ schedule: cron(0 0 * * 0 *) ]`
+        *  `events: [ schedule: cron(0 0 * * 0 *) ]`
 
-* No need to do any changes in AWS Console. But you can check the schedule there.
+    * No need to do any changes in AWS Console. But you can check the schedule there.
 
-* [Schedule Expressions for Rules - AWS Guide](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html)
+    * [Schedule Expressions for Rules - AWS Guide](https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html)
 
-* There are some additional CRON restrictions like, you cannot add ‘*’ to both day and month. You should add ‘?’ to one of them.
+        * There are some additional CRON restrictions like, you cannot add ‘*’ to both day and month. You should add ‘?’ to one of them.
 
 *  **MongoDB Audit Log**
 
-* MongoDB audit logs track and record database operations and events.
+    * MongoDB audit logs track and record database operations and events.
 
-* They provide an audit trail for compliance and logging, security, and troubleshooting.
+    * They provide an audit trail for compliance and logging, security, and troubleshooting.
 
-* Audit logs include authentication and authorization events, database operations, connection events, administrative actions, and server/database events.
+    * Audit logs include authentication and authorization events, database operations, connection events, administrative actions, and server/database events.
 
-* They help with user activity monitoring, security incident detection, compliance requirements, and performance troubleshooting, troubleshooting and debugging, data integrity, performance analysis.
+    * They help with user activity monitoring, security incident detection, compliance requirements, and performance troubleshooting, troubleshooting and debugging, data integrity, performance analysis.  
 
-* Enabling and configuring audit logs in MongoDB requires specific configurations and varies based on MongoDB version and deployment setup.
+    * Enabling and configuring audit logs in MongoDB requires specific configurations and varies based on MongoDB version and deployment setup.
 
-* CRUD project file:
+    * CRUD project file:
 
-* src\data\models\auditLog.model.ts
+        * src\data\models\auditLog.model.ts
 
-* src\data\mongoDB\models\auditLog.schema.model.ts
+        * src\data\mongoDB\models\auditLog.schema.model.ts
 
-* src\data\mongoDB\index.ts
+        * src\data\mongoDB\index.ts
 
-* src\data\mongoDb\auditLog.service.ts
+        * src\data\mongoDb\auditLog.service.ts
 
-* src\functions\invoice\invoice.service.ts
+        * src\functions\invoice\invoice.service.ts
 
 * ToDo later - Advanced:
 
-* [Auditing](https://www.mongodb.com/docs/manual/core/auditing/) | [Configure Auditing in MongoDB Atlas](https://www.mongodb.com/docs/manual/tutorial/configure-auditing/)
+    * [Auditing](https://www.mongodb.com/docs/manual/core/auditing/) | [Configure Auditing in MongoDB Atlas](https://www.mongodb.com/docs/manual/tutorial/configure-auditing/)
 
-* Add to SQS
+    * Add to SQS
 
   
   
@@ -1974,81 +1544,72 @@ return sendErrorResponse(err, logger, "Error when adding Invoice");
 
 * “Cannot resolve variable at "functions.authenticateCognitoUser.environment.COGNITO_CLIENT_ID": Value not found at "cf" source”
 
-* Fix: Upload CF template with proper name and parameter.
+    * Fix: Upload CF template with proper name and parameter.
 
-* This can also happen with a code error in like forgetting to add an index file for an EP etc.
+    * This can also happen with a code error in like forgetting to add an index file for an EP etc.
 
 * Cannot resolve variable at "functions.authenticateCognitoUser.environment.COGNITO_USER_POOL_ID": Value not found at "cf" source
 
-* Create user Pool etc
+    * Create user Pool etc
 
 * Function "cognitoAuthorizer" doesn't exist in this Service
 
-* Fix: Add to src\functions\index.ts
+    * Fix: Add to src\functions\index.ts
 
 * EntityMetadataNotFoundError2: No metadata for..
 
-* Fix: Add to src\data\mySQL\data-source.ts > entities
+    * Fix: Add to src\data\mySQL\data-source.ts > entities
 
 * User pool us-east-1_xxxxxxxx does not exist.
 
-* Create a user pool in Cognito and add it in the Parameter Store to read by the app.
+    * Create a user pool in Cognito and add it in the Parameter Store to read by the app.
 
-* Check AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY match the account. Perhaps you are using a different account. Select correct AWS profile in VSCode
+    * Check AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY match the account. Perhaps you are using a different account. Select correct AWS profile in VSCode
 
-* Set > .aws > config > region
+    * Set > .aws > config > region
 
-* List User Pools and check: `$ aws cognito-idp list-user-pools --region us-east-1 --max-results 10`
+    * List User Pools and check: `$ aws cognito-idp list-user-pools --region us-east-1 --max-results 10`
 
-* Deploy the app: `$ npm run deploy`
+    * Deploy the app: `$ npm run deploy`
 
-* Still get the error
+        * Still get the error
 
-* Clear serverless cache
+    * Clear serverless cache
 
-* Delete Application root > .serverless folder content
+        * Delete Application root > .serverless folder content
 
-*  ~~Delete C:\Users\nisal\.serverless folder content ~~- not required
+        *  ~~Delete C:\Users\nisal\.serverless folder content ~~- not required
 
-* This will update the Serverless Framework's cache of CloudFormation outputs: `$ sls deploy --force`
+        * This will update the Serverless Framework's cache of CloudFormation outputs: `$ sls deploy --force`
 
-* Run again: `$ npm run deploy`
+        * Run again: `$ npm run deploy`
 
-* AWS Systems Manager > Application Manager
+    * AWS Systems Manager > Application Manager
 
-* AppManager-CFN-cart-cognito-dev
+        * AppManager-CFN-cart-cognito-dev
 
-* Deleted the stack with “us-east-1_xxxxxxxx” above
+            * Deleted the stack with “us-east-1_xxxxxxxx” above
 
-* Recreate `cart-cognito-dev` CF stack using the template
+        * Recreate `cart-cognito-dev` CF stack using the template
 
-*  `$ npm run deploy`
+        *  `$ npm run deploy`
 
-*  `$ npm start`
-
-*
+        *  `$ npm start`
 
 * Error when deployed:
-
-  
-
-Error: V1 - Make sure the 'dev.us-east-1.api.aws-serverless-typescript-crud1.com'
-
-  
-
-exists. Unable to get Base Path Mappings: Invalid domain name identifier specified
+Error: V1 - Make sure the 'dev.us-east-1.api.aws-serverless-typescript-crud1.com' exists. Unable to get Base Path Mappings: Invalid domain name identifier specified
 
   
   
   
 
-* [https://github.com/amplify-education/serverless-domain-manager/issues/210](https://github.com/amplify-education/serverless-domain-manager/issues/210)
+    * [https://github.com/amplify-education/serverless-domain-manager/issues/210](https://github.com/amplify-education/serverless-domain-manager/issues/210)
 
-*  `$ sls create_domain`
+        *  `$ sls create_domain`
 
-*  `$ sls deploy -v`
+        *  `$ sls deploy -v`
 
-* Disabled serverless-domain-manager setting in serverless.ts
+    * Disabled serverless-domain-manager setting in serverless.ts
 
 * Cognito “User does not exist "UserNotFoundException"”
 
@@ -2056,26 +1617,27 @@ exists. Unable to get Base Path Mappings: Invalid domain name identifier specifi
 
 * Mongoose error: Cannot populate path `user` because it is not in your schema. Set the `strictPopulate` option to false to override.
 
-* Add correct document object key. E.g. ‘user’ is the related collection name. Main collection ‘cart’’s relationship id is ‘cartUser’
-```
-	Mongoose error: {
-		"error": {
-			   "code": 422,
-			   "message": "Cannot populate path `items` because it is not in 
-			   your schema. Set the `strictPopulate` option to false to 
-			   override."
-		}
-	}
-```
-  
+     * Add correct document object key. E.g. ‘user’ is the related collection name. Main collection ‘cart’’s relationship id is ‘cartUser’
+* Mongoose error: 
+    ```
+  {
+            "error": {
+                "code": 422,
+                "message": "Cannot populate path `items` because it is not in 
+                your schema. Set the `strictPopulate` option to false to 
+                override."
+            }
+        }
+    ```
 
-* Add correct document object key. E.g. “itemId” and not the related collection’s name “Item”
+    * Add correct document object key. E.g. “itemId” and not the related collection’s name “Item”
 
 * Errors in compiling serverless.ts file
 
-* Add wrapping quotations to strings like ARNs
+    * Add wrapping quotations to strings like ARNs
+* Mongoose error: 
 ```
-	Mongoose error: {
+	{
 		"error": {
 			"code": 422,
 			"message": "Schema hasn't been registered for model \"Item\".\nUse mongoose.model(name, schema)"
@@ -2084,56 +1646,56 @@ exists. Unable to get Base Path Mappings: Invalid domain name identifier specifi
 ```
 * Cannot resolve variable at "functions.authenticateCognitoUser.environment.COGNITO_USER_POOL_ID": Value not found at "cf" source
 
-* The error specifically mentions that the value was not found at the "cf" source
+    * The error specifically mentions that the value was not found at the "cf" source
 
-* Here are a few possible reasons for this error:
+    * Here are a few possible reasons for this error:
 
-* Missing or incorrect CloudFormation variable: Check if the variable `COGNITO_USER_POOL_ID `is defined correctly in your CloudFormation template. It should be defined as a parameter or an output in the template.
+        * Missing or incorrect CloudFormation variable: Check if the variable `COGNITO_USER_POOL_ID `is defined correctly in your CloudFormation template. It should be defined as a parameter or an output in the template.
 
-* Variable referencing issue: Ensure that you are referencing the variable `COGNITO_USER_POOL_ID `correctly in your Serverless Framework configuration. Double-check the path to the variable and make sure it matches the structure of your CloudFormation template.
+        * Variable referencing issue: Ensure that you are referencing the variable `COGNITO_USER_POOL_ID `correctly in your Serverless Framework configuration. Double-check the path to the variable and make sure it matches the structure of your CloudFormation template.
 
-* Build or deploy order: If you are deploying multiple CloudFormation stacks or resources, ensure that the stack containing the `COGNITO_USER_POOL_ID `variable is deployed before the stack that references it. Dependencies between stacks can cause issues if they are not deployed in the correct order.
+        * Build or deploy order: If you are deploying multiple CloudFormation stacks or resources, ensure that the stack containing the `COGNITO_USER_POOL_ID `variable is deployed before the stack that references it. Dependencies between stacks can cause issues if they are not deployed in the correct order.
 
-* Check variables like userpool in src\aws\cart-cognito-dev.yml
+    * Check variables like userpool in src\aws\cart-cognito-dev.yml
 
-* Check if you have created the stack using src\aws\cart-cognito-dev.yml and also Cognito UserPool and UserPoolClient created and names are correct
+    * Check if you have created the stack using src\aws\cart-cognito-dev.yml and also Cognito UserPool and UserPoolClient created and names are correct
 
-* Check if cart-cognito-dev values are not read because environment is not ‘dev’
+    * Check if cart-cognito-dev values are not read because environment is not ‘dev’
 
-* It should since we add this to package.json > scripts: serverless offline start --allowCache --aws-profile default --stage dev
+        * It should since we add this to package.json > scripts: serverless offline start --allowCache --aws-profile default --stage dev
 
-* Check variables names in Join etc in src\aws\cart-cognito-dev.yml
+    * Check variables names in Join etc in src\aws\cart-cognito-dev.yml
 
-* Create a basic stack using: src\aws\basic-sample-cognito-cfn-template.yml and check
+    * Create a basic stack using: src\aws\basic-sample-cognito-cfn-template.yml and check
 
 * The CloudFormation template is invalid: Template error: instance of Fn::GetAtt references undefined resource XXXXX
 
-* Check variables and imports in serverless.yml
+    * Check variables and imports in serverless.yml
 
 * Cognito error In Postman: `"Token use not allowed: access. Expected: id"`
 
-* If you use `accessToken`, will get this error, use the `idToken`as the `Bearer token`.
+    * If you use `accessToken`, will get this error, use the `idToken`as the `Bearer token`.
 
 * Package oriented errors (Like “Cannot find module XXXXX”) that is hard to identify & resolve:
 
-* If comes when testing: Clear Jest cache: `$ npx jest --clearCache`
+    * If comes when testing: Clear Jest cache: `$ npx jest --clearCache`
 
-* Remove existing `node_modules` folder:
+    * Remove existing `node_modules` folder:
 
-* Ubuntu`: $ rm -rf node_modules`
+        * Ubuntu`: $ rm -rf node_modules`
 
-* Windows VSCode/Powershell`: $ Remove-Item -Path "example-folder" -Recurse -Force`
+        * Windows VSCode/Powershell`: $ Remove-Item -Path "example-folder" -Recurse -Force`
 
-* Windows CMD line`: $ rd /s /q node_modules`
+        * Windows CMD line`: $ rd /s /q node_modules`
 
-* Reinstall all packages & dependencies afresh: `$ npm i`
+    * Reinstall all packages & dependencies afresh: `$ npm i`
 
 * Testing error "Connection is not established with MySQL database"
 
-* Occurring because the test is not properly mocking the database connection or the relevant database functions. To resolve this issue, you need to ensure that the necessary functions and objects related to the database connection are properly mocked in your test case.
+    * Occurring because the test is not properly mocking the database connection or the relevant database functions. To resolve this issue, you need to ensure that the necessary functions and objects related to the database connection are properly mocked in your test case.
 
   
-  
+
 
 # Still working on:
 
@@ -2141,6 +1703,7 @@ exists. Unable to get Base Path Mappings: Invalid domain name identifier specifi
   
   
 
+* Finalizing partially developed SQS, SNS, SES, Stripe integrations
 * Push Notifications with Websockets & AWS SNS
 
 * Sentry Integration for Error Logging
